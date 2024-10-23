@@ -1,149 +1,152 @@
 // Lab_7_3.cpp
-// < прізвище, ім’я автора >
+// Малаховський Назар
 // Лабораторна робота № 7.3.
 // Опрацювання динамічних багатовимірних масивів. Рекурсивний спосіб.
-// Варіант 0
-#include <iostream>
+// Варіант 20
+
 #include <iomanip>
+#include <iostream>
 #include <time.h>
+
 using namespace std;
+
 void PrintRow(int** a, const int rowNo, const int colCount, int colNo)
 {
-	cout << setw(4) << a[rowNo][colNo];
-	if (colNo < colCount - 1)
-		PrintRow(a, rowNo, colCount, colNo + 1);
-	else
-		cout << endl;
+    cout << setw(4) << a[rowNo][colNo];
+    if (colNo < colCount - 1)
+        PrintRow(a, rowNo, colCount, colNo + 1);
+    else
+        cout << endl;
 }
+
 void PrintRows(int** a, const int rowCount, const int colCount, int rowNo)
 {
-	PrintRow(a, rowNo, colCount, 0);
-	if (rowNo < rowCount - 1)
-		PrintRows(a, rowCount, colCount, rowNo + 1);
-	else
-		cout << endl;
+    PrintRow(a, rowNo, colCount, 0);
+    if (rowNo < rowCount - 1)
+        PrintRows(a, rowCount, colCount, rowNo + 1);
+    else
+        cout << endl;
 }
+
 void InputRow(int** a, const int rowNo, const int colCount, int colNo)
 {
-	cout << "a[" << rowNo << "][" << colNo << "] = ";
-	cin >> a[rowNo][colNo];
-	if (colNo < colCount - 1)
-		InputRow(a, rowNo, colCount, colNo + 1);
-	else
-		cout << endl;
+    cout << "a[" << rowNo << "][" << colNo << "] = ";
+    cin >> a[rowNo][colNo];
+    if (colNo < colCount - 1)
+        InputRow(a, rowNo, colCount, colNo + 1);
+    else
+        cout << endl;
 }
+
 void InputRows(int** a, const int rowCount, const int colCount, int rowNo)
 {
-	InputRow(a, rowNo, colCount, 0);
-	if (rowNo < rowCount - 1)
-		InputRows(a, rowCount, colCount, rowNo + 1);
-	else
-		cout << endl;
+    InputRow(a, rowNo, colCount, 0);
+    if (rowNo < rowCount - 1)
+        InputRows(a, rowCount, colCount, rowNo + 1);
+    else
+        cout << endl;
 }
-void CreateRow(int** a, const int rowNo, const int colCount, const int Low, const int High, int colNo)
+
+void Part1_ZeroCol(int** a, const int colCount, bool& hasZero, int rowNo, int colNo)
 {
-	a[rowNo][colNo] = Low + rand() % (High - Low + 1);
-	if (colNo < colCount - 1)
-		CreateRow(a, rowNo, colCount, Low, High, colNo + 1);
+    if (a[rowNo][colNo] == 0)
+    {
+        hasZero = true;
+    }
+    else if (colNo < colCount - 1)
+    {
+        Part1_ZeroCol(a, colCount, hasZero, rowNo, colNo + 1);
+    }
 }
-void CreateRows(int** a, const int rowCount, const int colCount, const int Low, const int High, int rowNo)
+
+void Part1_CountCol(int** a, const int colCount, int& count, int rowNo, int colNo)
 {
-	CreateRow(a, rowNo, colCount, Low, High, 0);
-	if (rowNo < rowCount - 1)
-		CreateRows(a, rowCount, colCount, Low, High, rowNo + 1);
+    if (a[rowNo][colNo] < 0)
+        count++;
+    if (colNo < colCount - 1)
+        Part1_CountCol(a, colCount, count, rowNo, colNo + 1);
 }
-void Part1_ZeroCol(int** a, const int rowCount, bool& result, int colNo, int rowNo, int& k_zero)
+
+int Part1_CountCols(int** a, const int rowCount, const int colCount, int rowNo)
 {
-	if (a[rowNo][colNo] == 0)
-	{
-		result = true;
-		k_zero++;
-	}
-	else
-		if (rowNo < rowCount - 1)
-			Part1_ZeroCol(a, rowCount, result, colNo, rowNo + 1, k_zero);
+    if (rowNo >= rowCount)
+        return 0;
+
+    bool hasZero = false;
+    Part1_ZeroCol(a, colCount, hasZero, rowNo, 0);
+
+    int count = 0;
+    if (hasZero)
+    {
+        Part1_CountCol(a, colCount, count, rowNo, 0);
+    }
+
+    return count + Part1_CountCols(a, rowCount, colCount, rowNo + 1);
 }
-void Part1_CountCol(int** a, const int rowCount, int& count, int colNo, int rowNo)
+
+bool IsMaxInRowN(int** a, const int rowNo, const int value, const int colCount, int colNo)
 {
-	if (a[rowNo][colNo] > 0)
-		count++;
-	if (rowNo < rowCount - 1)
-		Part1_CountCol(a, rowCount, count, colNo, rowNo + 1);
+    if (colNo >= colCount)
+        return true;
+    if (a[rowNo][colNo] < value)
+        return false;
+    else
+        return IsMaxInRowN(a, rowNo, value, colCount, colNo + 1);
 }
-void Part1_CountCols(int** a, const int rowCount, const int colCount, int& count, bool& result, int colNo)
+
+bool IsMinInColK(int** a, const int colNo, const int value, const int rowCount, int rowNo)
 {
-	int k_zero = 0;
-	Part1_ZeroCol(a, rowCount, result, colNo, 0, k_zero);
-	if (k_zero > 0)
-		Part1_CountCol(a, rowCount, count, colNo, 0);
-	if (colNo < colCount - 1)
-		Part1_CountCols(a, rowCount, colCount, count, result, colNo + 1);
+    if (rowNo >= rowCount)
+        return true;
+    if (a[rowNo][colNo] > value)
+        return false;
+    else
+        return IsMinInColK(a, colNo, value, rowCount, rowNo + 1);
 }
-bool IsMaxInRowN(int** a, const int rowNo, const int max, const int colCount, int colNo)
+
+void Part2_SaddlePointRow(int** a, const int rowCount, const int colCount,
+    int& No, const int rowNo, int colNo)
 {
-	if (a[rowNo][colNo] > max)
-		return false;
-	if (colNo < colCount - 1)
-		return IsMaxInRowN(a, rowNo, max, colCount, colNo + 1);
-	else
-		return true;
+    if (IsMaxInRowN(a, rowNo, a[rowNo][colNo], colCount, 0) &&
+        IsMinInColK(a, colNo, a[rowNo][colNo], rowCount, 0))
+    {
+        cout << setw(4) << ++No << setw(6) << rowNo << setw(6) << colNo << endl;
+    }
+    if (colNo < colCount - 1)
+        Part2_SaddlePointRow(a, rowCount, colCount, No, rowNo, colNo + 1);
 }
-bool IsMinInColK(int** a, const int colNo, const int min, const int rowCount, int rowNo)
+
+void Part2_SaddlePointRows(int** a, const int rowCount, const int colCount,
+    int& No, int rowNo)
 {
-	if (a[rowNo][colNo] < min)
-		return false;
-	if (rowNo < rowCount - 1)
-		return IsMinInColK(a, colNo, min, rowCount, rowNo + 1);
-	else
-		return true;
+    Part2_SaddlePointRow(a, rowCount, colCount, No, rowNo, 0);
+    if (rowNo < rowCount - 1)
+        Part2_SaddlePointRows(a, rowCount, colCount, No, rowNo + 1);
 }
-void Part2_SaddlePointRow(int** a, const int rowCount, const int colCount, int& No, const int rowNo, int colNo)
-{
-	if (IsMaxInRowN(a, rowNo, a[rowNo][colNo], colCount, 0) &&
-		IsMinInColK(a, colNo, a[rowNo][colNo], rowCount, 0))
-	{
-		cout << setw(4) << ++No << setw(6) << rowNo << setw(6) << colNo << endl;
-	}
-	if (colNo < colCount - 1)
-		Part2_SaddlePointRow(a, rowCount, colCount, No, rowNo, colNo + 1);
-}
-void Part2_SaddlePointRows(int** a, const int rowCount, const int colCount, int& No, int rowNo)
-{
-	Part2_SaddlePointRow(a, rowCount, colCount, No, rowNo, 0);
-	if (rowNo < rowCount - 1)
-		Part2_SaddlePointRows(a, rowCount, colCount, No, rowNo + 1);
-}
+
 int main()
 {
-	srand((unsigned)time(NULL));
-	int Low = -7;
-	int High = 7;
-	int rowCount, colCount;
-	cout << "rowCount = "; cin >> rowCount;
-	cout << "colCount = "; cin >> colCount;
-	int** a = new int* [rowCount];
-	for (int i = 0; i < rowCount; i++)
-		a[i] = new int[colCount];
+    int rowCount, colCount;
+    cout << "rowCount = "; cin >> rowCount;
+    cout << "colCount = "; cin >> colCount;
+    int** a = new int* [rowCount];
+    for (int i = 0; i < rowCount; i++)
+        a[i] = new int[colCount];
 
-	// CreateRows(a, rowCount, colCount, Low, High, 0);
+    InputRows(a, rowCount, colCount, 0);
+    PrintRows(a, rowCount, colCount, 0);
 
-	InputRows(a, rowCount, colCount, 0);
-	PrintRows(a, rowCount, colCount, 0);
-	int count = 0;
-	bool result = false;
-	Part1_CountCols(a, rowCount, colCount, count, result, 0);
-	if (result)
-		cout << "count = " << count << endl;
-	else
-		cout << "there are no zero elements" << endl;
-	cout << endl;
-	cout << "Saddle points: max in row & min in col" << endl;
-	cout << setw(4) << "No" << setw(6) << "Row" << setw(6) << "Col" << endl;
-	int No = 0;
-	Part2_SaddlePointRows(a, rowCount, colCount, No, 0);
-	cout << endl;
-	for (int i = 0; i < rowCount; i++)
-		delete[] a[i];
-	delete[] a;
-	return 0;
+    int totalNegatives = Part1_CountCols(a, rowCount, colCount, 0);
+    cout << "NegativeCountNums = " << totalNegatives << endl;
+
+    cout << endl;
+    cout << "Saddle points: min in row & max in col" << endl;
+    cout << setw(4) << "No" << setw(6) << "Row" << setw(6) << "Col" << endl;
+    int No = 0;
+    Part2_SaddlePointRows(a, rowCount, colCount, No, 0);
+
+    for (int i = 0; i < rowCount; i++)
+        delete[] a[i];
+    delete[] a;
+    return 0;
 }
